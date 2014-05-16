@@ -24,6 +24,7 @@ public class JSHint {
             rhino.eval(
             		"print=function(){};" +
             		"quit=function(){};" +
+            		"readFile=function(){};" +
             		"arguments=[];");
 
             rhino.eval(commentOutTheShebang(resourceAsString(jshintCode)));

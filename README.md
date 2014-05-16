@@ -23,7 +23,7 @@ Example configuration:
          </execution>
      </executions>
      <configuration>
-         <version>2.4.3</version>
+         <version>2.5.1</version>
          <options>maxparams:3,indent,camelcase,eqeqeq,forin,immed,latedef,noarg,noempty,nonew</options>
          <globals>require,$,yourFunkyJavascriptModule</globals>
          <configFile>src/main/resources/jshint.conf.js</configFile>
@@ -73,7 +73,7 @@ Configuration options:
 
 | Option          |  Default value                | Explanation  |
 | ---------------: | :---------------------------: | -------------|
-| version         |  2.4.3                        |   Selects which embedded version of jshint will be used |
+| version         |  2.5.1                        |   Selects which embedded version of jshint will be used |
 | options         |                               |   List of comma-separated [JSHint options](http://www.jshint.com/docs/#options)            |
 | globals         |                               |   List of comma-separated [JSHint globals](http://www.jshint.com/docs/#usage)             |
 | configFile      |                               |   Path to a JSHint JSON config file. Its contents will override values set in `options` and `globals`, if present. Can be relative or absolute file path. If not set or found, a search from project base up to the file system root will be made, looking for a file named '.jshintrc'. If none found, only the configured `globals` will be used for configuration.  Please note that block and line comments will be stripped prior to processing so it's OK to include them. |
