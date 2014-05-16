@@ -36,7 +36,7 @@ public class MojoTest {
                 Mojo mojo = new Mojo("", "",
                         projectDirectory,
                         Collections.singletonList("src/main/resources"),
-                        Collections.<String>emptyList(), true, true, null, null, null, null);
+                        Collections.<String>emptyList(), true, true, false, null, null, null, null);
                 mojo.setLog(log);
 
                 // when
@@ -62,7 +62,7 @@ public class MojoTest {
 			Mojo mojo = new Mojo("", "",
 							directory,
 							Collections.singletonList("src/main/resources/nonexistentDirectory"),
-							Collections.<String>emptyList(),true, true, null, null, null, null);
+							Collections.<String>emptyList(),true, true, false, null, null, null, null);
 			mojo.setLog(log);
 
 			// when
@@ -80,6 +80,32 @@ public class MojoTest {
 		}
 	}
 
+    @Test
+    public void doesntWarnUsersWhenConfiguredToWorkWithNonexistentDirectoriesAndQuiet() throws Exception {
+        File directory = tempDir();
+        try{
+            // given
+            mkdirs(directory, "src/main/resources");
+            LogStub log = new LogStub();
+            Mojo mojo = new Mojo("", "",
+                            directory,
+                            Collections.singletonList("src/main/resources/nonexistentDirectory"),
+                            Collections.<String>emptyList(),true, true, true, null, null, null, null);
+            mojo.setLog(log);
+
+            // when
+            mojo.execute();
+
+            // then
+            assertEquals(0, log.messagesForLevel("warn").size());
+            assertEquals(0, log.messagesForLevel("info").size());
+
+
+        }finally{
+            deleteDirectory(directory);
+        }
+    }
+	
 //	@Test
 //	public void resolvesConfigFileRelativeToMavenBasedirProperty() throws Exception {
 //		File directory = tempDir();
@@ -133,7 +159,7 @@ public class MojoTest {
             Mojo mojo = new Mojo(null, "", 
                             directory, 
                             Collections.singletonList("src/main/resources/"), 
-                            Collections.<String>emptyList(), true, true, "foo/bar/my-config-file.js", null, null, null);
+                            Collections.<String>emptyList(), true, true, false, "foo/bar/my-config-file.js", null, null, null);
             
             LogStub log = new LogStub();
             mojo.setLog(log);
@@ -170,7 +196,7 @@ public class MojoTest {
             Mojo mojo = new Mojo(null, "", 
                     baseDir,
                             Collections.singletonList("src/main/resources/"), 
-                            Collections.<String>emptyList(), true, true, jshintConf.getAbsolutePath(), null, null, null);
+                            Collections.<String>emptyList(), true, true, false, jshintConf.getAbsolutePath(), null, null, null);
             
             LogStub log = new LogStub();
             mojo.setLog(log);

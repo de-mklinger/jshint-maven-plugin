@@ -88,12 +88,18 @@ public class Mojo extends AbstractMojo {
     /**
      * @parameter expression="${jshint.version}"
      */
-    private final String version = "2.4.3";
+    private final String version = "2.5.1";
+
+    /**
+     * @parameter
+     */
+    private Boolean quiet = false;
 
 	/**
 	 * @parameter
 	 */
 	private Boolean failOnError = true;
+	
 	/**
      * @parameter
      */
@@ -109,7 +115,7 @@ public class Mojo extends AbstractMojo {
 	public Mojo() {}
 
 	public Mojo(final String options, final String globals, final File basedir, final List<String> directories, 
-	        final List<String> excludes, final boolean failOnError, final boolean failOnWarning, 
+	        final List<String> excludes, final boolean failOnError, final boolean failOnWarning, boolean quiet,
 	        final String configFile, final String reporter, final String reportFile, final String ignoreFile) {
 		super();
 		this.options = options;
@@ -119,6 +125,7 @@ public class Mojo extends AbstractMojo {
 		this.excludes.addAll(excludes);
         this.failOnError = failOnError;
         this.failOnWarning = failOnWarning;
+        this.quiet = quiet;
 		this.configFile = configFile;
 		this.reporter = reporter;
 		this.reportFile = reportFile;
@@ -127,13 +134,13 @@ public class Mojo extends AbstractMojo {
 
 	@Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-	    getLog().info("using jshint version " + version);
+	    log("using jshint version " + version);
 
 	    final String jshintCode = getEmbeddedJshintCode(version);
 
         final JSHint jshint = new JSHint(jshintCode);
 
-        final Config config = readConfig(this.options, this.globals, this.configFile, this.basedir, getLog());
+        final Config config = readConfig(this.options, this.globals, this.configFile, this.basedir);
         if (this.excludes.isEmpty() || (this.ignoreFile != null && !this.ignoreFile.isEmpty())) {
             this.excludes.addAll(readIgnore(this.ignoreFile, this.basedir, getLog()).lines);
         }
@@ -173,7 +180,7 @@ public class Mojo extends AbstractMojo {
 
 	}
 
-    private static Config readConfig(final String options, final String globals, final String configFileParam, final File basedir, final Log log) throws MojoExecutionException {
+    private Config readConfig(final String options, final String globals, final String configFileParam, final File basedir) throws MojoExecutionException {
         final Config config;
         if (options != null) {
             config = new Config(options, globals);
@@ -186,15 +193,15 @@ public class Mojo extends AbstractMojo {
                 }
             }
             if (configFile != null && configFile.exists()) {
-                log.info("Using configured 'configFile' from: " + configFile.getAbsolutePath());
+                log("Using configured 'configFile' from: " + configFile.getAbsolutePath());
                 config = processConfigFile(configFile);
             } else {
                 final File jshintRc = findJshintrc(basedir);
                 if (jshintRc != null) {
-                    log.info("No configFile configured or found, but found a '.jshintrc' file: " + jshintRc.getAbsolutePath());
+                    log("No configFile configured or found, but found a '.jshintrc' file: " + jshintRc.getAbsolutePath());
                     config = processConfigFile(jshintRc);
                 } else {
-                    log.info("No options, configFile or '.jshintrc' file found. Only using configured globals.");
+                    log("No options, configFile or '.jshintrc' file found. Only using configured globals.");
                     config = new Config("", globals);
                 }
             }
@@ -236,7 +243,7 @@ public class Mojo extends AbstractMojo {
         for(String next: directories){
         	File path = new File(basedir, next);
         	if(!path.exists() && !path.isDirectory()){
-        		getLog().info("You told me to find tests in " + next + ", but there is nothing there (" + path.getAbsolutePath() + ")");
+        		log("You told me to find tests in " + next + ", but there is nothing there (" + path.getAbsolutePath() + ")");
         	}else{
         		collect(path, javascriptFiles);
         	}
@@ -248,7 +255,7 @@ public class Mojo extends AbstractMojo {
         		for(String exclude : excludes){
         			File e = new File(basedir, exclude);
         			if(i.getAbsolutePath().startsWith(e.getAbsolutePath())){
-        				getLog().info("Excluding " + i);
+        				log("Excluding " + i);
         				return Boolean.FALSE;
         			}
         		}
@@ -265,11 +272,11 @@ public class Mojo extends AbstractMojo {
             Result previousResult = cache.previousResults.get(file.getAbsolutePath());
             Result theResult;
             if (previousResult == null || (previousResult.lastModified.longValue() != file.lastModified())) {
-                log.info("  " + file);
+                log.info(file.getAbsolutePath());
                 List<Hint> hints = jshint.run(new FileInputStream(file), config.options, config.globals);
                 theResult = new Result(file.getAbsolutePath(), file.lastModified(), hints);
             } else {
-                log.info("  " + file + " [no change]");
+                log.info(file.getAbsolutePath() + " [no change]");
                 theResult = previousResult;
             }
 
@@ -341,7 +348,7 @@ public class Mojo extends AbstractMojo {
             if (numProblematicFiles > 1) {
                 errorMessage += "s";
             }
-            errorMessage += "! Please see errors/warning above!";
+            errorMessage += "! Please see errors/warnings above!";
             
 
             errorMessage += "\nJSHint is ";
@@ -357,12 +364,12 @@ public class Mojo extends AbstractMojo {
                     errorMessage += "warning ";
             }
             
-            if (hasErrors || hasWarnings)
-            
-            if ((failOnError && hasErrors) || (failOnWarning && hasWarnings)) {
-                throw new MojoExecutionException(errorMessage);
-            } else {
-                getLog().info(errorMessage);
+            if (hasErrors || hasWarnings) {
+                if ((failOnError && hasErrors) || (failOnWarning && hasWarnings)) {
+                    throw new MojoExecutionException(errorMessage);
+                } else {
+                    getLog().info(errorMessage);
+                }
             }
         }
     }
@@ -381,7 +388,7 @@ public class Mojo extends AbstractMojo {
         }
         File file = StringUtils.isNotBlank(reportFile) ?
                 new File(reportFile) : new File("target/jshint.xml");
-        getLog().info(String.format("Generating \"JSHint\" report. reporter=%s, reportFile=%s.",
+        log(String.format("Generating \"JSHint\" report. reporter=%s, reportFile=%s.",
                 reportType, file.getAbsolutePath()));
 
         String report = reporter.report(results);
@@ -527,6 +534,14 @@ public class Mojo extends AbstractMojo {
             return new Ignore(FileUtils.readLines(ignoreFile, "UTF-8"));
         } catch (IOException e) {
             throw new MojoExecutionException("Unable to read ignore file located in " + ignoreFile, e);
+        }
+    }
+    
+    private void log(String s) {
+        if (quiet) {
+            getLog().debug(s);
+        } else {
+            getLog().info(s);
         }
     }
 }
