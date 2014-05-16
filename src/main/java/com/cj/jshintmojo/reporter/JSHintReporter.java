@@ -1,19 +1,18 @@
 package com.cj.jshintmojo.reporter;
 
-import java.util.Map;
+import org.apache.maven.plugin.MojoExecutionException;
 
-import com.cj.jshintmojo.cache.Result;
+import com.cj.jshintmojo.cache.Results;
 
 /**
  * A interface for JSHint reporting class.
  */
 public interface JSHintReporter {
-
     /**
-     * Creates a lint reporting string. 
+     * Created the lint report. 
      * 
      * @param results lint results to report.
-     * @return reporting string.
+     * @throws MojoExecutionException In case of an error
      */
-    public String report(Map<String, Result> results);
+    public void report(Results results) throws MojoExecutionException;
 }

@@ -54,9 +54,10 @@ public class JSHint {
             for(Object next : errors){
                 if(next != null){ // sometimes it seems that the last error in the list is null
                     JSObject jso = new JSObject(next);
-                    if (jso.dot("id").toString().equals("(error)")) {
-                        results.add(Hint.createHint(jso));
-                    }
+                    // the if will exclude the "too many errors" error. But I want to see it.
+//                    if ("(error)".equals((String)jso.dot("id"))) {
+                        results.add(new Hint(jso));
+//                    }
                 }
             }
         }
@@ -123,7 +124,10 @@ public class JSHint {
         }
     }
 
-    public static abstract class Hint {
+    public static class Hint implements Serializable {
+        private static final long serialVersionUID = 1L;
+        
+        public HintSeverity severity;
         public String id, code, raw, evidence, reason;
         public Number line, character;
 
@@ -135,71 +139,51 @@ public class JSHint {
             line = o.dot("line");
             character = o.dot("character");
             reason = o.dot("reason");
-        }
-
-        public Hint() { }
-        
-        public String printLogMessage() {
-            String line = (this.line != null) ? String.valueOf(this.line.intValue()) : "";
-            String character = (this.character != null) ? String.valueOf(this.character.intValue()) : "";
-            return "   " + line + "," + character + ": " + this.reason + " \t(" + this.code + ")";
-        }
-        
-        public static Hint createHint(final JSObject jso) {
-            if (jso == null)
-            	throw new IllegalArgumentException();
-            String code = (String)jso.dot("code");
-            
             char c = code.charAt(0);
-            Hint hint;
             switch (c) {
                 case 'E':
-                    hint = new Error(jso);
+                    severity = HintSeverity.ERROR;
                     break;
                 case 'W':
-                    hint = new Warning(jso);
+                    severity = HintSeverity.WARNING;
                     break;
                 case 'I':
-                    hint = new Info(jso);
+                    severity = HintSeverity.INFO;
                     break;
                 default:
                     throw new IllegalArgumentException("Unexpected char c=" + c);
             }
-            return hint;
         }
 
+        public Hint() { }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("Hint [severity=");
+            builder.append(severity);
+            builder.append(", id=");
+            builder.append(id);
+            builder.append(", code=");
+            builder.append(code);
+            builder.append(", raw=");
+            builder.append(raw);
+            builder.append(", evidence=");
+            builder.append(evidence);
+            builder.append(", reason=");
+            builder.append(reason);
+            builder.append(", line=");
+            builder.append(line);
+            builder.append(", character=");
+            builder.append(character);
+            builder.append("]");
+            return builder.toString();
+        }
     }
 
-    @SuppressWarnings("serial")
-    public static class Warning extends Hint implements Serializable {
-
-        public Warning(final JSObject o) {
-            super(o);
-        }
-
-        // NOTE: for Unit Testing purpose.
-        public Warning() { }
-    }
-
-    @SuppressWarnings("serial")
-    public static class Error extends Hint implements Serializable {
-
-        public Error(final JSObject o) {
-            super(o);
-        }
-
-        // NOTE: for Unit Testing purpose.
-        public Error() { }
-    }
-    
-    @SuppressWarnings("serial")
-    public static class Info extends Hint implements Serializable {
-
-        public Info(final JSObject o) {
-            super(o);
-        }
-
-        // NOTE: for Unit Testing purpose.
-        public Info() { }
+    public static enum HintSeverity {
+        ERROR,
+        WARNING,
+        INFO
     }
 }

@@ -36,7 +36,7 @@ public class MojoTest {
                 Mojo mojo = new Mojo("", "",
                         projectDirectory,
                         Collections.singletonList("src/main/resources"),
-                        Collections.<String>emptyList(), true, true, false, null, null, null, null);
+                        Collections.<String>emptyList(), true, true, true, null, null, null, null);
                 mojo.setLog(log);
 
                 // when
@@ -62,7 +62,7 @@ public class MojoTest {
 			Mojo mojo = new Mojo("", "",
 							directory,
 							Collections.singletonList("src/main/resources/nonexistentDirectory"),
-							Collections.<String>emptyList(),true, true, false, null, null, null, null);
+							Collections.<String>emptyList(),true, true, true, null, null, null, null);
 			mojo.setLog(log);
 
 			// when
@@ -71,17 +71,14 @@ public class MojoTest {
 			// then
 			assertEquals(0, log.messagesForLevel("warn").size());
 			assertEquals(2, log.messagesForLevel("info").size());
-			assertEquals("You told me to find tests in src/main/resources/nonexistentDirectory, but there is nothing there (" + directory.getAbsolutePath() + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "nonexistentDirectory)",
-								log.messagesForLevel("info").get(1).content.toString());
-
-
+			assertTrue(log.hasMessage("info", "You told me to find tests in src/main/resources/nonexistentDirectory, but there is nothing there (" + directory.getAbsolutePath() + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "nonexistentDirectory)"));
 		}finally{
 			deleteDirectory(directory);
 		}
 	}
 
     @Test
-    public void doesntWarnUsersWhenConfiguredToWorkWithNonexistentDirectoriesAndQuiet() throws Exception {
+    public void doesntWarnUsersWhenConfiguredToWorkWithNonexistentDirectoriesAndNonVerbose() throws Exception {
         File directory = tempDir();
         try{
             // given
@@ -90,7 +87,7 @@ public class MojoTest {
             Mojo mojo = new Mojo("", "",
                             directory,
                             Collections.singletonList("src/main/resources/nonexistentDirectory"),
-                            Collections.<String>emptyList(),true, true, true, null, null, null, null);
+                            Collections.<String>emptyList(),true, true, false, null, null, null, null);
             mojo.setLog(log);
 
             // when
@@ -98,7 +95,7 @@ public class MojoTest {
 
             // then
             assertEquals(0, log.messagesForLevel("warn").size());
-            assertEquals(0, log.messagesForLevel("info").size());
+            assertEquals(1, log.messagesForLevel("info").size());
 
 
         }finally{
@@ -106,47 +103,15 @@ public class MojoTest {
         }
     }
 	
-//	@Test
-//	public void resolvesConfigFileRelativeToMavenBasedirProperty() throws Exception {
-//		File directory = tempDir();
-//		try{
-//			// given
-//			mkdirs(directory, "src/main/resources");
-//			mkdirs(directory, "foo/bar");
-//			FileUtils.writeLines(new File(directory, "foo/bar/my-config-file.js"), Arrays.asList(
-//					"{",
-//					"  \"globals\": {",
-//					"    \"require\": false",
-//					"  }",
-//					"}"
-//					));
-//
-//			Mojo mojo = new Mojo(null, "",
-//							directory,
-//							Collections.singletonList("src/main/resources/"),
-//							Collections.<String>emptyList(),true, true, "foo/bar/my-config-file.js", null, null, null);
-//
-//			LogStub log = new LogStub();
-//			mojo.setLog(log);
-//
-//			// when
-//			mojo.execute();
-//
-//			// then
-//			final String properPathForConfigFile = new File(directory, "foo/bar/my-config-file.js").getAbsolutePath();
-//			assertTrue(log.hasMessage("info", "Using configuration file: " + properPathForConfigFile));
-//
-//		}finally{
-//			deleteDirectory(directory);
-//		}
-//	}
-	
 	@Test
     public void resolvesConfigFileRelativeToMavenBasedirProperty() throws Exception {
         File directory = tempDir();
         try{
             // given
-            mkdirs(directory, "src/main/resources");
+            File resourcesDirectory = mkdirs(directory, "src/main/resources");
+            File jsFile = new File(resourcesDirectory, "test.js");
+            FileUtils.writeStringToFile(jsFile, "var x = 0;");
+
             mkdirs(directory, "foo/bar");
             FileUtils.writeLines(new File(directory, "foo/bar/my-config-file.js"), Arrays.asList(
                     "{",
@@ -159,7 +124,7 @@ public class MojoTest {
             Mojo mojo = new Mojo(null, "", 
                             directory, 
                             Collections.singletonList("src/main/resources/"), 
-                            Collections.<String>emptyList(), true, true, false, "foo/bar/my-config-file.js", null, null, null);
+                            Collections.<String>emptyList(), true, true, true, "foo/bar/my-config-file.js", null, null, null);
             
             LogStub log = new LogStub();
             mojo.setLog(log);
@@ -182,7 +147,10 @@ public class MojoTest {
         File baseDir = tempDir();
         try{
             // given
-            mkdirs(directory, "src/main/resources");
+            File resourcesDirectory = mkdirs(baseDir, "src/main/resources");
+            File jsFile = new File(resourcesDirectory, "test.js");
+            FileUtils.writeStringToFile(jsFile, "var x = 0;");
+
             mkdirs(directory, "foo/bar");
             File jshintConf = new File(directory, "foo/bar/jshint.conf.json");
             FileUtils.writeLines(jshintConf, Arrays.asList(
@@ -196,7 +164,7 @@ public class MojoTest {
             Mojo mojo = new Mojo(null, "", 
                     baseDir,
                             Collections.singletonList("src/main/resources/"), 
-                            Collections.<String>emptyList(), true, true, false, jshintConf.getAbsolutePath(), null, null, null);
+                            Collections.<String>emptyList(), true, true, true, jshintConf.getAbsolutePath(), null, null, null);
             
             LogStub log = new LogStub();
             mojo.setLog(log);

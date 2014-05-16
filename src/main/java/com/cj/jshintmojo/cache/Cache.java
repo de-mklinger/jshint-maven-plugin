@@ -29,13 +29,13 @@ public class Cache implements Serializable {
 	}
 	
 	public final Hash hash;
-	public final Map<String, Result> previousResults;
+	public final Results previousResults;
 	
 	public Cache(Hash hash) {
-      this(hash, new HashMap<String, Result>());
+      this(hash, new Results());
 	}
 
-	public Cache(Hash hash, Map<String, Result> previousResults) {
+	public Cache(Hash hash, Results previousResults) {
 	  this.hash = hash;
 	  this.previousResults = previousResults;
 	}

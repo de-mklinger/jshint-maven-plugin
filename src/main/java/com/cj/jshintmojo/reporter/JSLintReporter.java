@@ -1,61 +1,39 @@
 package com.cj.jshintmojo.reporter;
 
-import java.util.Arrays;
-import java.util.Map;
-
-import org.apache.commons.lang.StringUtils;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 
 import com.cj.jshintmojo.cache.Result;
+import com.cj.jshintmojo.cache.Results;
 import com.cj.jshintmojo.jshint.JSHint.Hint;
 
 /**
  * JSLint style xml reporter class.
  */
-public class JSLintReporter implements JSHintReporter {
-
+public class JSLintReporter extends BaseXmlFileReporter {
     /**
      * format type of this reporter.
      */
     public static final String FORMAT = "jslint";
 
+    public JSLintReporter(File reportFile) {
+        super(reportFile);
+    }
+
     @Override
-    public String report(final Map<String, Result> results) {
-        if(results == null){
-            return "";
-        }
-        StringBuilder buf = new StringBuilder();
-        buf.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-        buf.append("<jslint>\n");
-        String[] files = results.keySet().toArray(new String[0]);
-        Arrays.sort(files);
-        for(String file : files){
-            Result result = results.get(file);
-            buf.append("\t<file name=\"" + result.path + "\">\n");
+    protected void writeXmlBody(Writer writer, Results results) throws IOException {
+        writer.write("<jslint>\n");
+        for (Result result : results.getResultsSorted()) {
+            writer.write("\t<file name=\"" + result.path + "\">\n");
             for (Hint hint : result.hints) {
-                buf.append(String.format("\t\t<issue line=\"%d\" char=\"%d\" reason=\"%s\" evidence=\"%s\" ",
+                writer.write(String.format("\t\t<issue line=\"%d\" char=\"%d\" reason=\"%s\" evidence=\"%s\" ",
                         hint.line.intValue(), hint.character.intValue(), encode(hint.reason), encode(hint.evidence)));
-                if(StringUtils.isNotEmpty(hint.code)){
-                    buf.append("severity=\"" + hint.code.charAt(0) + "\" ");
-                }
-                buf.append("/>\n");
+                writer.write("severity=\"" + hint.severity.toString().charAt(0) + "\" ");
+                writer.write("/>\n");
             }
-            buf.append("\t</file>\n");
+            writer.write("\t</file>\n");
         }
-        buf.append("</jslint>\n");
-
-        return buf.toString();
+        writer.write("</jslint>\n");
     }
-
-    private String encode(final String str) {
-        if(str == null){
-            return "";
-        }
-        return str
-                .replaceAll("&", "&amp;")
-                .replaceAll("\"", "&quot;")
-                .replaceAll("'", "&apos;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;");
-    }
-
 }
