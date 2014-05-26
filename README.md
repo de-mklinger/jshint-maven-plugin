@@ -13,7 +13,7 @@ Example configuration:
 
 ~~~~~ xml
 <plugin>
-     <groupId>com.cj.jshintmojo</groupId>
+     <groupId>de.mklinger.maven.jshint</groupId>
      <artifactId>jshint-maven-plugin</artifactId>
      <executions>
          <execution>
