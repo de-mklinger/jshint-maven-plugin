@@ -1,12 +1,22 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
+	<!-- 
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
 	</parent>
+	-->
+	
+	<parent>
+		<groupId>de.mklinger.maven</groupId>
+		<artifactId>maven-parent</artifactId>
+		<version>1.5</version>
+	</parent>
 
-	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.mklinger.maven.jshint</groupId>
 	<artifactId>jshint-maven-plugin</artifactId>
 	<version>2.0-SNAPSHOT</version>
@@ -14,6 +24,7 @@
 
 	<name>${project.artifactId}</name>
 
+	<!-- not needed with mklinger parent
 	<build>
 		<plugins>
 			<plugin>
@@ -32,6 +43,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	-->
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.maven</groupId>
@@ -57,34 +69,26 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
+			<!--
 			<version>2.1</version>
+			-->
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<!--
 			<version>4.11</version>
+			-->
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
+			<!-- 
 			<version>2.6</version>
+			-->
 		</dependency>
 	</dependencies>
-
-	<!-- remove for central repo: -->
-	<distributionManagement>
-		<repository>
-			<id>mklinger</id>
-			<name>mklinger-releases-private</name>
-			<url>https://mklinger.de/nexus/content/repositories/releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>mklinger</id>
-			<name>mklinger-snapshots-private</name>
-			<url>https://mklinger.de/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 
 	<!-- BEGIN: STUFF REQUIRED BY THE CENTRAL REPO -->
 	<description>a maven mojo that integrates the 'jshint' javascript preprocessor</description>
