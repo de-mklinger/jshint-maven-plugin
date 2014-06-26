@@ -20,12 +20,11 @@ import org.apache.maven.plugin.logging.Log;
 import org.codehaus.plexus.util.StringUtils;
 
 import de.mklinger.maven.jshint.cache.Cache;
+import de.mklinger.maven.jshint.cache.Hash;
 import de.mklinger.maven.jshint.cache.Result;
 import de.mklinger.maven.jshint.cache.Results;
 import de.mklinger.maven.jshint.jshint.EmbeddedJshintCode;
-import de.mklinger.maven.jshint.jshint.FunctionalJava;
 import de.mklinger.maven.jshint.jshint.JSHint;
-import de.mklinger.maven.jshint.jshint.FunctionalJava.Fn;
 import de.mklinger.maven.jshint.jshint.JSHint.Hint;
 import de.mklinger.maven.jshint.jshint.JSHint.HintSeverity;
 import de.mklinger.maven.jshint.reporter.CheckStyleReporter;
@@ -155,7 +154,7 @@ public class Mojo extends AbstractMojo {
         }
 	    
         final Config config = readConfig(this.options, this.globals, this.configFile, this.basedir);
-        final Cache.Hash cacheHash = new Cache.Hash(config.options, config.globals, this.version, this.configFile, this.directories, this.excludes);
+        final Hash cacheHash = new Hash(config.options, config.globals, this.version, this.configFile, this.directories, this.excludes);
 
         debug("Using jshint version " + version);
         final String jshintCode = getEmbeddedJshintCode(version);
@@ -223,16 +222,16 @@ public class Mojo extends AbstractMojo {
 
     }
 
-    private static Ignore readIgnore(final String ignoreFileParam, final File basedir, final Log log) throws MojoExecutionException {
+    private Ignore readIgnore(final String ignoreFileParam, final File basedir) throws MojoExecutionException {
         final File jshintignore = findJshintignore(basedir);
         final File ignoreFile = StringUtils.isNotBlank(ignoreFileParam) ? new File(basedir, ignoreFileParam) : null;
 
         final Ignore ignore;
         if (ignoreFile != null) {
-            log.info("Using ignore file: " + ignoreFile.getAbsolutePath());
+            debug("Using ignore file: " + ignoreFile.getAbsolutePath());
             ignore = processIgnoreFile(ignoreFile);
         } else if (jshintignore != null) {
-            log.info("Using ignore file: " + jshintignore.getAbsolutePath());
+            debug("Using ignore file: " + jshintignore.getAbsolutePath());
             ignore = processIgnoreFile(jshintignore);
         } else {
             ignore = new Ignore(Collections.<String>emptyList());
@@ -242,38 +241,43 @@ public class Mojo extends AbstractMojo {
     }
 
     private List<File> findFilesToCheck() throws MojoExecutionException {
-        if(directories.isEmpty()){
-            directories.add("src");
-        }
-        if (this.excludes.isEmpty() || (this.ignoreFile != null && !this.ignoreFile.isEmpty())) {
-            this.excludes.addAll(readIgnore(this.ignoreFile, this.basedir, getLog()).lines);
-        }
+        List<File> actualDirectories = getActualDirectories();
+        List<File> actualExcludes = getActualExcludes();
 
         List<File> javascriptFiles = new ArrayList<File>();
-        for(String next: directories){
-        	File path = new File(basedir, next);
-        	if(!path.exists() && !path.isDirectory()){
-        		debug("You told me to find tests in " + next + ", but there is nothing there (" + path.getAbsolutePath() + ")");
-        	}else{
-        		collect(path, javascriptFiles);
+        for (File directory : actualDirectories){
+        	if (!directory.exists() || !directory.isDirectory()){
+        		debug("You told me to find tests in " + directory + ", but there is nothing there");
+        	} else {
+        		collect(directory, javascriptFiles, actualExcludes);
         	}
         }
+        
+        return javascriptFiles;
+    }
 
-        List<File> matches = FunctionalJava.filter(javascriptFiles, new Fn<File, Boolean>(){
-        	@Override
-            public Boolean apply(final File i) {
-        		for(String exclude : excludes){
-        			File e = new File(basedir, exclude);
-        			if(i.getAbsolutePath().startsWith(e.getAbsolutePath())){
-        				debug("Excluding " + i);
-        				return Boolean.FALSE;
-        			}
-        		}
+    private List<File> getActualExcludes() throws MojoExecutionException {
+        List<File> actualExcludes = new ArrayList<>();
+        for (String exclude : excludes) {
+            actualExcludes.add(new File(basedir, exclude));
+        }
+        if (actualExcludes.isEmpty() || (ignoreFile != null && !ignoreFile.isEmpty())) {
+            for (String exclude : readIgnore(ignoreFile, basedir).lines) {
+                actualExcludes.add(new File(basedir, exclude));
+            }
+        }
+        return actualExcludes;
+    }
 
-        		return Boolean.TRUE;
-        	}
-        });
-        return matches;
+    private List<File> getActualDirectories() {
+        List<File> actualDirectories = new ArrayList<>();
+        for (String dirName : this.directories) {
+            actualDirectories.add(new File(basedir, dirName));
+        }
+        if (actualDirectories.isEmpty()) {
+            actualDirectories.add(new File(basedir, "src"));
+        }
+        return actualDirectories;
     }
 
     private Results lintTheFiles(final JSHint jshint, final Cache cache, final List<File> filesToCheck, final Config config, final Log log) throws FileNotFoundException {
@@ -425,34 +429,48 @@ public class Mojo extends AbstractMojo {
         return null;
     }
 
-	private Cache readCache(final File path, final Cache.Hash hash){
+	private Cache readCache(final File path, final Hash hash){
 		try {
-			if(path.exists()){
+			if (path.exists()){
 				Cache cache = Util.readObject(path);
-		        if(EqualsBuilder.reflectionEquals(cache.hash, hash)){
+		        if (EqualsBuilder.reflectionEquals(cache.hash, hash)){
 		            return cache;
-		        }else{
+		        } else {
 		        	getLog().warn("Something changed ... clearing cache");
 		            return new Cache(hash);
 		        }
 
 			}
 		} catch (Throwable e) {
-			super.getLog().warn("I was unable to read the cache. This may be because of an upgrade to the plugin.");
+			getLog().warn("I was unable to read the cache. This may be because of an upgrade to the plugin.");
 		}
 
 		return new Cache(hash);
 	}
 
-	private void collect(final File directory, final List<File> files) {
-		for(File next : directory.listFiles()){
-			if(next.isDirectory()){
-				collect(next, files);
-			}else if(next.getName().endsWith(".js")){
-				files.add(next);
+	private void collect(final File directory, final List<File> files, List<File> actualExcludes) {
+		for (File candidateFile : directory.listFiles()){
+			if (candidateFile.isDirectory()){
+				collect(candidateFile, files, actualExcludes);
+			} else if (candidateFile.getName().endsWith(".js")) {
+			    if (isExcluded(candidateFile, actualExcludes)) {
+			        debug("Excluding " + candidateFile.getAbsolutePath());
+			    } else {
+			        files.add(candidateFile);
+			    }
 			}
 		}
 	}
+
+    private boolean isExcluded(File candidateFile, List<File> actualExcludes) {
+        boolean excluded = false;
+        for (File excludeFile : actualExcludes) {
+            if (candidateFile.getAbsolutePath().startsWith(excludeFile.getAbsolutePath())) {
+                excluded = true;
+            }
+        }
+        return excluded;
+    }
 
 	/**
 	 * Read contents of the specified config file and use the values defined there instead of the ones defined directly in pom.xml config.

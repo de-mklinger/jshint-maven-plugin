@@ -73,7 +73,7 @@ public class MojoTest {
 			// then
 			assertEquals(0, log.messagesForLevel("warn").size());
 			assertEquals(2, log.messagesForLevel("info").size());
-			assertTrue(log.hasMessage("info", "You told me to find tests in src/main/resources/nonexistentDirectory, but there is nothing there (" + directory.getAbsolutePath() + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "nonexistentDirectory)"));
+			assertTrue(log.hasMessage("info", "You told me to find tests in " + directory.getAbsolutePath() + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "nonexistentDirectory, but there is nothing there"));
 		}finally{
 			deleteDirectory(directory);
 		}
