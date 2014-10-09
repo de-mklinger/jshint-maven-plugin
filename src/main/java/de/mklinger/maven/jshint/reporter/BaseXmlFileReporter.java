@@ -15,25 +15,25 @@ import de.mklinger.maven.jshint.cache.Results;
  * @author Marc Klinger - mklinger[at]mklinger[dot]de - klingerm
  */
 public abstract class BaseXmlFileReporter implements JSHintReporter {
-    private File outputFile;
+    private final File outputFile;
 
-    public BaseXmlFileReporter(File outputFile) {
+    public BaseXmlFileReporter(final File outputFile) {
         this.outputFile = outputFile;
     }
 
     @Override
-    public void report(Results results) throws MojoExecutionException {
+    public void report(final Results results) throws MojoExecutionException {
         if (results == null) {
             return;
         }
         try {
-            File outputDirectory = outputFile.getParentFile();
+            final File outputDirectory = outputFile.getParentFile();
             if (!outputDirectory.exists()) {
                 if (!outputDirectory.mkdirs()) {
                     throw new IOException("Error creating directory: " + outputDirectory.getAbsolutePath());
                 }
             }
-            Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+            final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
             try {
                 writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
                 writeXmlBody(writer, results);
@@ -42,7 +42,7 @@ public abstract class BaseXmlFileReporter implements JSHintReporter {
                     writer.close();
                 }
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new MojoExecutionException("Error creating report: " + outputFile.getAbsolutePath(), e);
         }
     }
@@ -57,7 +57,7 @@ public abstract class BaseXmlFileReporter implements JSHintReporter {
                 .replace("'", "&apos;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;");
-    }        
+    }
 
     protected abstract void writeXmlBody(Writer writer, Results results) throws IOException;
 }

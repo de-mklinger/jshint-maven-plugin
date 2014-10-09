@@ -1,5 +1,6 @@
 package de.mklinger.maven.jshint.jshint;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,50 +15,50 @@ import org.mozilla.javascript.ScriptableObject;
 import de.mklinger.maven.jshint.util.Rhino;
 
 public class JSHint {
-
     private final Rhino rhino;
+    private final String srcFileEncoding;
 
-    public JSHint(final String jshintCode) {
-
+    public JSHint(final String jshintResourceName, final String srcFileEncoding) throws IOException {
+        this.srcFileEncoding = srcFileEncoding;
         rhino = new Rhino();
         try {
             rhino.eval(
-            		"print=function(){};" +
-            		"quit=function(){};" +
-            		"readFile=function(){};" +
-            		"arguments=[];");
+                    "print=function(){};" +
+                            "quit=function(){};" +
+                            "readFile=function(){};" +
+                    "arguments=[];");
 
-            rhino.eval(commentOutTheShebang(resourceAsString(jshintCode)));
-        } catch (EcmaError e) {
+            rhino.eval(commentOutTheShebang(resourceAsString(jshintResourceName, "UTF-8")));
+        } catch (final EcmaError e) {
             throw new RuntimeException("Javascript eval error:" + e.getScriptStackTrace(), e);
         }
     }
 
     private String commentOutTheShebang(final String code) {
-        String minusShebang = code.startsWith("#!")?"//" + code : code;
-        return minusShebang;
+        if (code.startsWith("#!")) {
+            return "//" + code;
+        } else {
+            return code;
+        }
     }
 
-    public List<Hint> run(final InputStream source, final String options, final String globals) {
+    public List<Hint> run(final InputStream source, final String options, final String globals) throws IOException {
         final List<Hint> results = new ArrayList<JSHint.Hint>();
 
-        String sourceAsText = toString(source);
+        final String sourceAsText = toString(source, srcFileEncoding);
 
-        NativeObject nativeOptions = toJsObject(options);
-        NativeObject nativeGlobals = toJsObject(globals);
+        final NativeObject nativeOptions = toJsObject(options);
+        final NativeObject nativeGlobals = toJsObject(globals);
 
-        Boolean codePassesMuster = rhino.call("JSHINT", sourceAsText, nativeOptions, nativeGlobals);
+        final Boolean codePassesMuster = rhino.call("JSHINT", sourceAsText, nativeOptions, nativeGlobals);
 
-        if(!codePassesMuster){
-            NativeArray errors = rhino.eval("JSHINT.errors");
+        if (!codePassesMuster){
+            final NativeArray errors = rhino.eval("JSHINT.errors");
 
-            for(Object next : errors){
-                if(next != null){ // sometimes it seems that the last error in the list is null
-                    JSObject jso = new JSObject(next);
-                    // the if will exclude the "too many errors" error. But I want to see it.
-//                    if ("(error)".equals((String)jso.dot("id"))) {
-                        results.add(new Hint(jso));
-//                    }
+            for (final Object next : errors){
+                if (next != null) { // sometimes it seems that the last error in the list is null
+                    final JSObject jso = new JSObject(next);
+                    results.add(new Hint(jso));
                 }
             }
         }
@@ -66,7 +67,7 @@ public class JSHint {
     }
 
     private NativeObject toJsObject(final String options) {
-        NativeObject nativeOptions = new NativeObject();
+        final NativeObject nativeOptions = new NativeObject();
         for (final String nextOption : options.split(",")) {
             final String option = nextOption.trim();
             if(!option.isEmpty()){
@@ -79,7 +80,7 @@ public class JSHint {
                     value = Boolean.TRUE;
                 } else {
                     name = option.substring(0, valueDelimiter);
-                    String rest = option.substring(valueDelimiter+1).trim();
+                    final String rest = option.substring(valueDelimiter+1).trim();
                     if (rest.matches("[0-9]+")) {
                         value = Integer.parseInt(rest);
                     } else if (rest.equals("true")) {
@@ -96,16 +97,14 @@ public class JSHint {
         return nativeOptions;
     }
 
-    private static String toString(final InputStream in) {
-        try {
-            return IOUtils.toString(in);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private static String toString(final InputStream in, final String encoding) throws IOException {
+        return IOUtils.toString(in, encoding);
     }
 
-    private String resourceAsString(final String name) {
-        return toString(getClass().getResourceAsStream(name));
+    private String resourceAsString(final String name, final String encoding) throws IOException {
+        try (final InputStream in = getClass().getResourceAsStream(name)) {
+            return toString(in, encoding);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -126,7 +125,7 @@ public class JSHint {
 
     public static class Hint implements Serializable {
         private static final long serialVersionUID = 1L;
-        
+
         public HintSeverity severity;
         public String id, code, raw, evidence, reason;
         public Number line, character;
@@ -139,7 +138,7 @@ public class JSHint {
             line = o.dot("line");
             character = o.dot("character");
             reason = o.dot("reason");
-            char c = code.charAt(0);
+            final char c = code.charAt(0);
             switch (c) {
                 case 'E':
                     severity = HintSeverity.ERROR;
@@ -159,7 +158,7 @@ public class JSHint {
 
         @Override
         public String toString() {
-            StringBuilder builder = new StringBuilder();
+            final StringBuilder builder = new StringBuilder();
             builder.append("Hint [severity=");
             builder.append(severity);
             builder.append(", id=");

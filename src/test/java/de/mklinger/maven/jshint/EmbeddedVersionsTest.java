@@ -1,6 +1,7 @@
 package de.mklinger.maven.jshint;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,8 +32,8 @@ public class EmbeddedVersionsTest {
 
     @Parameters(name = "Test for compatiblity with jshint version {0}")
     public static Collection<Object[]> data() {
-        List<Object[]> params = new ArrayList<Object[]>();
-        for(String version : EmbeddedJshintCode.EMBEDDED_VERSIONS.keySet()){
+        final List<Object[]> params = new ArrayList<Object[]>();
+        for(final String version : EmbeddedJshintCode.EMBEDDED_VERSIONS.keySet()){
             params.add(new Object[]{version});
         }
         return params;
@@ -65,15 +66,15 @@ public class EmbeddedVersionsTest {
 
     @Ignore("Because 'code' is null")
     @Test
-    public void booleanOptionsCanBeFalse(){
+    public void booleanOptionsCanBeFalse() throws IOException{
         // given
         final String globals = "";
         final String options = "evil:false";
         final InputStream code = toStream("eval('var x = 1 + 1;');");
-        final JSHint jsHint = new JSHint(jshintVersion);
+        final JSHint jsHint = new JSHint(jshintVersion, "UTF-8");
 
         // when
-        List<Hint> hints = jsHint.run(code, options, globals);
+        final List<Hint> hints = jsHint.run(code, options, globals);
 
         // then
         Assert.assertNotNull(hints);
@@ -84,15 +85,15 @@ public class EmbeddedVersionsTest {
 
 
     @Test
-    public void booleanOptionsCanBeTrue(){
+    public void booleanOptionsCanBeTrue() throws IOException{
         // given
         final String globals = "";
         final String options = "evil:true";
         final InputStream code = toStream("eval('var x = 1 + 1;');");
-        final JSHint jsHint = new JSHint(jshintVersion);
+        final JSHint jsHint = new JSHint(jshintVersion, "UTF-8");
 
         // when
-        List<Hint> hints = jsHint.run(code, options, globals);
+        final List<Hint> hints = jsHint.run(code, options, globals);
 
         // then
         Assert.assertNotNull(hints);
@@ -101,15 +102,15 @@ public class EmbeddedVersionsTest {
 
     @Ignore("Because 'code' is null")
     @Test
-    public void supportsOptionsThatTakeANumericValue(){
+    public void supportsOptionsThatTakeANumericValue() throws IOException{
         // given
         final String globals = "alert";
         final String options = "indent:4";
         final InputStream code = toStream(" alert('Bad Indentation');");
-        final JSHint jsHint = new JSHint(jshintVersion);
+        final JSHint jsHint = new JSHint(jshintVersion, "UTF-8");
 
         // when
-        List<Hint> hints = jsHint.run(code, options, globals);
+        final List<Hint> hints = jsHint.run(code, options, globals);
 
         // then
         Assert.assertNotNull(hints);
@@ -119,15 +120,15 @@ public class EmbeddedVersionsTest {
 
     @Ignore("Because 'code' is null")
     @Test
-    public void supportsParametersWithValues(){
+    public void supportsParametersWithValues() throws IOException{
         // given
         final String globals = "";
         final String options = "maxparams:1";
         final InputStream code = toStream("function cowboyFunction(param1, param2){return 'yee-haw!';}");
-        final JSHint jsHint = new JSHint(jshintVersion);
+        final JSHint jsHint = new JSHint(jshintVersion, "UTF-8");
 
         // when
-        List<Hint> hints = jsHint.run(code, options, globals);
+        final List<Hint> hints = jsHint.run(code, options, globals);
 
         // then
         Assert.assertNotNull(hints);
@@ -137,15 +138,15 @@ public class EmbeddedVersionsTest {
 
     @Ignore("Because 'code' is null")
     @Test
-    public void supportsParametersWithoutValues(){
+    public void supportsParametersWithoutValues() throws IOException{
         // given
         final String globals = "Foo";
         final String options = "nonew";
         final InputStream code = toStream("new Foo();");
-        final JSHint jsHint = new JSHint(jshintVersion);
+        final JSHint jsHint = new JSHint(jshintVersion, "UTF-8");
 
         // when
-        List<Hint> hints = jsHint.run(code, options, globals);
+        final List<Hint> hints = jsHint.run(code, options, globals);
 
         // then
         Assert.assertNotNull(hints);
@@ -155,15 +156,15 @@ public class EmbeddedVersionsTest {
     }
 
     @Test
-    public void supportsTheGlobalsParameter(){
+    public void supportsTheGlobalsParameter() throws IOException{
         // given
         final String globals = "someGlobal";
         final String options = "undef";
         final InputStream code = toStream("(function(){var value = someGlobal();}());");
-        final JSHint jsHint = new JSHint(jshintVersion);
+        final JSHint jsHint = new JSHint(jshintVersion, "UTF-8");
 
         // when
-        List<Hint> hints = jsHint.run(code, options, globals);
+        final List<Hint> hints = jsHint.run(code, options, globals);
 
         // then
         Assert.assertNotNull(hints);
@@ -175,8 +176,8 @@ public class EmbeddedVersionsTest {
     }
 
     private static String toString(final List<Hint> hints) {
-        StringBuffer text = new StringBuffer();
-        for(Hint hint: hints){
+        final StringBuffer text = new StringBuffer();
+        for(final Hint hint: hints){
             text.append(hint.reason + "\n");
         }
         return text.toString();

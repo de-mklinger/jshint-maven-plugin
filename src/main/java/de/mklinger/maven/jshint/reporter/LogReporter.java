@@ -1,6 +1,5 @@
 package de.mklinger.maven.jshint.reporter;
 
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
 import de.mklinger.maven.jshint.cache.Result;
@@ -12,26 +11,26 @@ import de.mklinger.maven.jshint.jshint.JSHint.Hint;
  */
 public class LogReporter implements JSHintReporter {
     private static final String NL = "\n";
-    private Log log;
+    private final Log log;
 
-    public LogReporter(Log log) {
+    public LogReporter(final Log log) {
         this.log = log;
-    }     
+    }
 
     @Override
-    public void report(Results results) throws MojoExecutionException {
+    public void report(final Results results) {
         if (results.getNumberOfHints() == 0) {
             // be quiet
             return;
         }
-        StringBuilder sb = new StringBuilder();
-        for (Result result : results.getResultsSorted()) {
+        final StringBuilder sb = new StringBuilder();
+        for (final Result result : results.getResultsSorted()) {
             if (result.hints.isEmpty()) {
                 continue;
             }
             sb.append(result.path);
             sb.append(NL);
-            for (Hint hint : result.hints) {
+            for (final Hint hint : result.hints) {
                 sb.append("   ");
                 sb.append(hint.severity);
                 sb.append(" at ");
