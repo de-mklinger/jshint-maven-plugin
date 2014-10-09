@@ -22,6 +22,10 @@
 
 	<name>${project.artifactId}</name>
 
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 	<!-- not needed with mklinger parent
 	<build>
 		<plugins>
