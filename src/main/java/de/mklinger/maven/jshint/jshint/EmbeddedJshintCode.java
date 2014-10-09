@@ -14,7 +14,6 @@ public class EmbeddedJshintCode {
         versions.put("2.4.3", "jshint-rhino-2.4.3.js");
         versions.put("2.4.1", "jshint-rhino-2.4.1.js");
         versions.put("2.1.9", "jshint-rhino-2.1.9.js");
-        versions.put("r12", "jshint-r12.js");
         return versions;
     }
 }
