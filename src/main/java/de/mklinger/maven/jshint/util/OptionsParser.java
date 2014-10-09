@@ -8,18 +8,18 @@ import java.util.regex.Pattern;
 import org.codehaus.plexus.util.StringUtils;
 
 public class OptionsParser {
-	private final static Pattern GLOBALS_PATTERN = Pattern.compile("\"globals\"\\s*:\\s*\\{(.*?)}", Pattern.DOTALL);
+	private static final Pattern GLOBALS_PATTERN = Pattern.compile("\"globals\"\\s*:\\s*\\{(.*?)}", Pattern.DOTALL);
 
 	/**
 	 * @param withComments
 	 *            input JSON string with optional comments
 	 * @return input with comments removed (i.e. valid JSON)
 	 */
-	private static String removeComments(String withComments) {
-		String withoutBlockComments = withComments.replaceAll("\\/\\*(?:(?!\\*\\/)[\\s\\S])*\\*\\/", "");
+	private static String removeComments(final String withComments) {
+		final String withoutBlockComments = withComments.replaceAll("\\/\\*(?:(?!\\*\\/)[\\s\\S])*\\*\\/", "");
 
 		// Everything after '//'
-		String withoutAllComments = withoutBlockComments.replaceAll("\\/\\/[^\\n\\r]*", "");
+		final String withoutAllComments = withoutBlockComments.replaceAll("\\/\\/[^\\n\\r]*", "");
 
 		return withoutAllComments;
 	}
@@ -40,15 +40,15 @@ public class OptionsParser {
 	 *            JSON-like file contents
 	 * @return set of JSHint options, excluding globals
 	 */
-	public static Set<String> extractOptions(byte[] configFileContentsBytes) {
-		String configFileContents = new String(configFileContentsBytes);
-		String withoutComments = removeComments(configFileContents);
-		Matcher matcher = GLOBALS_PATTERN.matcher(withoutComments);
-		String optionsCsv = matcher.replaceAll("").replaceAll("\"", "").replaceAll("\\s", "");
-		String optionsBody = insideCurly(optionsCsv);
+	public static Set<String> extractOptions(final byte[] configFileContentsBytes) {
+		final String configFileContents = new String(configFileContentsBytes);
+		final String withoutComments = removeComments(configFileContents);
+		final Matcher matcher = GLOBALS_PATTERN.matcher(withoutComments);
+		final String optionsCsv = matcher.replaceAll("").replaceAll("\"", "").replaceAll("\\s", "");
+		final String optionsBody = insideCurly(optionsCsv);
 
-		Set<String> options = new HashSet<String>();
-		for (String option : optionsBody.split(",")) {
+		final Set<String> options = new HashSet<String>();
+		for (final String option : optionsBody.split(",")) {
 			if (StringUtils.isBlank(option)) {
 				continue;
 			}
@@ -63,14 +63,14 @@ public class OptionsParser {
 	 *            JSON-like file contents
 	 * @return set of JSHint allowed globals
 	 */
-	public static Set<String> extractGlobals(byte[] configFileContents) {
-		String withoutComments = removeComments(new String(configFileContents));
-		Matcher matcher = GLOBALS_PATTERN.matcher(withoutComments);
+	public static Set<String> extractGlobals(final byte[] configFileContents) {
+		final String withoutComments = removeComments(new String(configFileContents));
+		final Matcher matcher = GLOBALS_PATTERN.matcher(withoutComments);
 		matcher.find();
-		String globalsCsv = matcher.group(1).replaceAll("\\s", "").replaceAll("\"", "");
+		final String globalsCsv = matcher.group(1).replaceAll("\\s", "").replaceAll("\"", "");
 
-		Set<String> globalsSet = new HashSet<String>();
-		for (String global : globalsCsv.split(",")) {
+		final Set<String> globalsSet = new HashSet<String>();
+		for (final String global : globalsCsv.split(",")) {
 			globalsSet.add(global);
 		}
 		return globalsSet;
