@@ -17,7 +17,7 @@
 
 	<groupId>de.mklinger.maven.jshint</groupId>
 	<artifactId>jshint-maven-plugin</artifactId>
-	<version>2.2</version>
+	<version>2.3-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>${project.artifactId}</name>
@@ -105,7 +105,7 @@
 		<connection>scm:git:git@github.com:mklinger/jshint-mojo.git</connection>
 		<url>scm:git:git@github.com:mklinger/jshint-mojo.git</url>
 		<developerConnection>scm:git:git@github.com:mklinger/jshint-mojo.git</developerConnection>
-		<tag>jshint-maven-plugin-2.2</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<developers>
