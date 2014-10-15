@@ -10,7 +10,7 @@ import de.mklinger.maven.jshint.jshint.JSHint.Hint;
  * @author Marc Klinger - mklinger[at]mklinger[dot]de - klingerm
  */
 public class LogReporter implements JSHintReporter {
-	private static final String NL = "\n";
+	private static final char NL = '\n';
 	private final Log log;
 
 	public LogReporter(final Log log) {
@@ -42,7 +42,7 @@ public class LogReporter implements JSHintReporter {
 				sb.append(" \t(");
 				sb.append(hint.code);
 				sb.append(")");
-				sb.append(NL);
+				sb.append('\n');
 			}
 		}
 		if (results.hasErrors()) {

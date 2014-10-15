@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
@@ -118,8 +119,18 @@ public class JSHint {
 			this.a = (NativeObject)o;
 		}
 
-		public <T> T dot(final String name){
-			return (T) a.get(name);
+		public String getString(final String name) {
+			final Object value = a.get(name);
+			if (value instanceof ConsString) {
+				final ConsString cs = (ConsString)value;
+				return cs.toString();
+			} else {
+				return (String)value;
+			}
+		}
+
+		public Number getNumber(final String name) {
+			return (Number)a.get(name);
 		}
 	}
 
@@ -131,26 +142,26 @@ public class JSHint {
 		public Number line, character;
 
 		public Hint(final JSObject o) {
-			id = o.dot("id");
-			code = o.dot("code");
-			raw = o.dot("raw");
-			evidence = o.dot("evidence");
-			line = o.dot("line");
-			character = o.dot("character");
-			reason = o.dot("reason");
+			id = o.getString("id");
+			code = o.getString("code");
+			raw = o.getString("raw");
+			evidence = o.getString("evidence");
+			line = o.getNumber("line");
+			character = o.getNumber("character");
+			reason = o.getString("reason");
 			final char c = code.charAt(0);
 			switch (c) {
-				case 'E':
-					severity = HintSeverity.ERROR;
-					break;
-				case 'W':
-					severity = HintSeverity.WARNING;
-					break;
-				case 'I':
-					severity = HintSeverity.INFO;
-					break;
-				default:
-					throw new IllegalArgumentException("Unexpected char c=" + c);
+			case 'E':
+				severity = HintSeverity.ERROR;
+				break;
+			case 'W':
+				severity = HintSeverity.WARNING;
+				break;
+			case 'I':
+				severity = HintSeverity.INFO;
+				break;
+			default:
+				throw new IllegalArgumentException("Unexpected char c=" + c);
 			}
 		}
 
