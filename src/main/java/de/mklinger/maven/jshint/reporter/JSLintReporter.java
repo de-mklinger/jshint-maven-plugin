@@ -6,7 +6,7 @@ import java.io.Writer;
 
 import de.mklinger.maven.jshint.cache.Result;
 import de.mklinger.maven.jshint.cache.Results;
-import de.mklinger.maven.jshint.jshint.JSHint.Hint;
+import de.mklinger.maven.jshint.jshint.Hint;
 
 /**
  * JSLint style xml reporter class.
@@ -28,8 +28,8 @@ public class JSLintReporter extends BaseXmlFileReporter {
 			writer.write("\t<file name=\"" + result.path + "\">\n");
 			for (final Hint hint : result.hints) {
 				writer.write(String.format("\t\t<issue line=\"%d\" char=\"%d\" reason=\"%s\" evidence=\"%s\" ",
-						hint.line.intValue(), hint.character.intValue(), encode(hint.reason), encode(hint.evidence)));
-				writer.write("severity=\"" + hint.severity.toString().charAt(0) + "\" ");
+						hint.getLine().intValue(), hint.getCharacter().intValue(), encode(hint.getReason()), encode(hint.getEvidence())));
+				writer.write("severity=\"" + hint.getSeverity().toString().charAt(0) + "\" ");
 				writer.write("/>\n");
 			}
 			writer.write("\t</file>\n");

@@ -7,11 +7,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -24,9 +22,9 @@ import de.mklinger.maven.jshint.cache.Hash;
 import de.mklinger.maven.jshint.cache.Result;
 import de.mklinger.maven.jshint.cache.Results;
 import de.mklinger.maven.jshint.jshint.EmbeddedJshintCode;
+import de.mklinger.maven.jshint.jshint.Hint;
+import de.mklinger.maven.jshint.jshint.Hint.HintSeverity;
 import de.mklinger.maven.jshint.jshint.JSHint;
-import de.mklinger.maven.jshint.jshint.JSHint.Hint;
-import de.mklinger.maven.jshint.jshint.JSHint.HintSeverity;
 import de.mklinger.maven.jshint.reporter.CheckStyleReporter;
 import de.mklinger.maven.jshint.reporter.JSHintReporter;
 import de.mklinger.maven.jshint.reporter.JSLintReporter;
@@ -230,39 +228,13 @@ public class Mojo extends AbstractMojo {
 		return platformEncoding;
 	}
 
-	public static class Ignore {
-		private final List<String> lines;
-
-		public Ignore(final List<String> lines) {
-			this.lines = lines;
-		}
-	}
-
-	private Ignore readIgnore(final String ignoreFileParam, final File basedir) throws IOException {
-		final File jshintignore = findJshintignore(basedir);
-		final File ignoreFile = StringUtils.isNotBlank(ignoreFileParam) ? new File(basedir, ignoreFileParam) : null;
-
-		final Ignore ignore;
-		if (ignoreFile != null) {
-			debug("Using ignore file: " + ignoreFile.getAbsolutePath());
-			ignore = processIgnoreFile(ignoreFile);
-		} else if (jshintignore != null) {
-			debug("Using ignore file: " + jshintignore.getAbsolutePath());
-			ignore = processIgnoreFile(jshintignore);
-		} else {
-			ignore = new Ignore(Collections.<String>emptyList());
-		}
-
-		return ignore;
-	}
-
 	private List<File> findFilesToCheck() throws IOException {
 		final List<File> actualDirectories = getActualDirectories();
 		final List<File> actualExcludes = getActualExcludes();
 
 		final List<File> javascriptFiles = new ArrayList<File>();
-		for (final File directory : actualDirectories){
-			if (!directory.exists() || !directory.isDirectory()){
+		for (final File directory : actualDirectories) {
+			if (!directory.exists() || !directory.isDirectory()) {
 				debug("You told me to find tests in " + directory + ", but there is nothing there");
 			} else {
 				collect(directory, javascriptFiles, actualExcludes);
@@ -278,9 +250,11 @@ public class Mojo extends AbstractMojo {
 			actualExcludes.add(new File(basedir, exclude));
 		}
 		if (actualExcludes.isEmpty() || (ignoreFile != null && !ignoreFile.isEmpty())) {
-			for (final String exclude : readIgnore(ignoreFile, basedir).lines) {
-				actualExcludes.add(new File(basedir, exclude));
+			final Ignore ignore = Ignore.loadIgnore(ignoreFile, basedir);
+			if (ignore.getIgnoreFile() != null) {
+				debug("Using ignore file: " + ignore.getIgnoreFile().getAbsolutePath());
 			}
+			actualExcludes.addAll(ignore.getExcludes());
 		}
 		return actualExcludes;
 	}
@@ -327,24 +301,24 @@ public class Mojo extends AbstractMojo {
 		}
 		for (final Hint hint : hints) {
 			HintSeverity newSeverity = null;
-			if (errorHints != null && errorHints.contains(hint.code)) {
+			if (errorHints != null && errorHints.contains(hint.getCode())) {
 				newSeverity = HintSeverity.ERROR;
-			} else if (warningHints != null && warningHints.contains(hint.code)) {
+			} else if (warningHints != null && warningHints.contains(hint.getCode())) {
 				newSeverity = HintSeverity.WARNING;
-			} else if (infoHints != null && infoHints.contains(hint.code)) {
+			} else if (infoHints != null && infoHints.contains(hint.getCode())) {
 				newSeverity = HintSeverity.INFO;
 			}
-			if (newSeverity != null && hint.severity != newSeverity) {
-				debug("Mapping hint with code " + hint.code + " from severity " + hint.severity + " to severity " + newSeverity);
-				hint.severity = newSeverity;
+			if (newSeverity != null && hint.getSeverity() != newSeverity) {
+				debug("Mapping hint with code " + hint.getCode() + " from severity " + hint.getSeverity() + " to severity " + newSeverity);
+				hint.setSeverity(newSeverity);
 			}
 		}
 	}
 
 	private void handleResults(final Results results) throws MojoFailureException, MojoExecutionException {
-		final JSHintReporter reporter = getConfiguredReporter();
-		if (reporter != null) {
-			reporter.report(results);
+		final JSHintReporter actualReporter = getActualReporter();
+		if (actualReporter != null) {
+			actualReporter.report(results);
 		}
 		new LogReporter(getLog()).report(results);
 
@@ -353,7 +327,7 @@ public class Mojo extends AbstractMojo {
 		}
 	}
 
-	private JSHintReporter getConfiguredReporter() {
+	private JSHintReporter getActualReporter() {
 		final File file = StringUtils.isNotBlank(reportFile) ? new File(reportFile) : new File("target/jshint.xml");
 		if (JSLintReporter.FORMAT.equalsIgnoreCase(reporter)) {
 			return new JSLintReporter(file);
@@ -410,29 +384,15 @@ public class Mojo extends AbstractMojo {
 
 	private static String getEmbeddedJshintResourceName(final String version) throws MojoExecutionException {
 		final String resource = EmbeddedJshintCode.EMBEDDED_VERSIONS.get(version);
-		if (resource == null){
+		if (resource == null) {
 			final StringBuilder knownVersions = new StringBuilder();
-			for (final String v : EmbeddedJshintCode.EMBEDDED_VERSIONS.keySet()){
+			for (final String v : EmbeddedJshintCode.EMBEDDED_VERSIONS.keySet()) {
 				knownVersions.append("\n    ");
 				knownVersions.append(v);
 			}
 			throw new MojoExecutionException("I don't know about the \"" + version + "\" version of jshint.  Here are the versions I /do/ know about: " + knownVersions.toString());
 		}
 		return resource;
-	}
-
-	private static File findJshintignore(final File cwd) {
-		File placeToLook = cwd;
-		while (placeToLook.getParentFile() != null) {
-			final File ignoreFile = new File(placeToLook, ".jshintignore");
-			if (ignoreFile.exists()) {
-				return ignoreFile;
-			} else {
-				placeToLook = placeToLook.getParentFile();
-			}
-		}
-
-		return null;
 	}
 
 	private Cache readCache(final File path, final Hash hash) {
@@ -445,7 +405,6 @@ public class Mojo extends AbstractMojo {
 					getLog().warn("Something changed ... clearing cache");
 					return new Cache(hash);
 				}
-
 			}
 		} catch (final Exception e) {
 			getLog().warn("I was unable to read the cache. This may be because of an upgrade to the plugin.");
@@ -469,21 +428,12 @@ public class Mojo extends AbstractMojo {
 	}
 
 	private boolean isExcluded(final File candidateFile, final List<File> actualExcludes) {
-		boolean excluded = false;
 		for (final File excludeFile : actualExcludes) {
 			if (candidateFile.getAbsolutePath().startsWith(excludeFile.getAbsolutePath())) {
-				excluded = true;
+				return true;
 			}
 		}
-		return excluded;
-	}
-
-	/**
-	 * Read contents of the specified ignore file and use the values defined
-	 * there instead of the ones defined directly in pom.xml config.
-	 */
-	private static Ignore processIgnoreFile(final File ignoreFile) throws IOException {
-		return new Ignore(FileUtils.readLines(ignoreFile, "UTF-8"));
+		return false;
 	}
 
 	private void debug(final String s) {

@@ -2,12 +2,10 @@ package de.mklinger.maven.jshint.jshint;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
@@ -16,6 +14,10 @@ import org.mozilla.javascript.ScriptableObject;
 import de.mklinger.maven.jshint.util.Rhino;
 
 public class JSHint {
+	private static final String PREQUEL = "print=function(){};"
+			+ "quit=function(){};"
+			+ "readFile=function(){};"
+			+ "arguments=[];";
 	private final Rhino rhino;
 	private final String srcFileEncoding;
 
@@ -23,12 +25,7 @@ public class JSHint {
 		this.srcFileEncoding = srcFileEncoding;
 		rhino = new Rhino();
 		try {
-			rhino.eval(
-					"print=function(){};" +
-							"quit=function(){};" +
-							"readFile=function(){};" +
-					"arguments=[];");
-
+			rhino.eval(PREQUEL);
 			rhino.eval(commentOutTheShebang(resourceAsString(jshintResourceName, "UTF-8")));
 		} catch (final EcmaError e) {
 			throw new RuntimeException("Javascript eval error:" + e.getScriptStackTrace(), e);
@@ -44,7 +41,7 @@ public class JSHint {
 	}
 
 	public List<Hint> run(final InputStream source, final String options, final String globals) throws IOException {
-		final List<Hint> results = new ArrayList<JSHint.Hint>();
+		final List<Hint> results = new ArrayList<Hint>();
 
 		final String sourceAsText = toString(source, srcFileEncoding);
 
@@ -58,7 +55,7 @@ public class JSHint {
 
 			for (final Object next : errors) {
 				if (next != null) { // sometimes it seems that the last error in the list is null
-					final JSObject jso = new JSObject(next);
+					final JSObject jso = new JSObject((NativeObject)next);
 					results.add(new Hint(jso));
 				}
 			}
@@ -106,94 +103,5 @@ public class JSHint {
 		try (final InputStream in = getClass().getResourceAsStream(name)) {
 			return toString(in, encoding);
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	static class JSObject {
-		private final NativeObject a;
-
-		public JSObject(final Object o) {
-			if(o==null) {
-				throw new NullPointerException();
-			}
-			this.a = (NativeObject)o;
-		}
-
-		public String getString(final String name) {
-			final Object value = a.get(name);
-			if (value instanceof ConsString) {
-				final ConsString cs = (ConsString)value;
-				return cs.toString();
-			} else {
-				return (String)value;
-			}
-		}
-
-		public Number getNumber(final String name) {
-			return (Number)a.get(name);
-		}
-	}
-
-	public static class Hint implements Serializable {
-		private static final long serialVersionUID = 1L;
-
-		public HintSeverity severity;
-		public String id, code, raw, evidence, reason;
-		public Number line, character;
-
-		public Hint(final JSObject o) {
-			id = o.getString("id");
-			code = o.getString("code");
-			raw = o.getString("raw");
-			evidence = o.getString("evidence");
-			line = o.getNumber("line");
-			character = o.getNumber("character");
-			reason = o.getString("reason");
-			final char c = code.charAt(0);
-			switch (c) {
-			case 'E':
-				severity = HintSeverity.ERROR;
-				break;
-			case 'W':
-				severity = HintSeverity.WARNING;
-				break;
-			case 'I':
-				severity = HintSeverity.INFO;
-				break;
-			default:
-				throw new IllegalArgumentException("Unexpected char c=" + c);
-			}
-		}
-
-		public Hint() { }
-
-		@Override
-		public String toString() {
-			final StringBuilder builder = new StringBuilder();
-			builder.append("Hint [severity=");
-			builder.append(severity);
-			builder.append(", id=");
-			builder.append(id);
-			builder.append(", code=");
-			builder.append(code);
-			builder.append(", raw=");
-			builder.append(raw);
-			builder.append(", evidence=");
-			builder.append(evidence);
-			builder.append(", reason=");
-			builder.append(reason);
-			builder.append(", line=");
-			builder.append(line);
-			builder.append(", character=");
-			builder.append(character);
-			builder.append("]");
-			return builder.toString();
-		}
-	}
-
-	public static enum HintSeverity {
-		ERROR,
-		WARNING,
-		INFO
 	}
 }

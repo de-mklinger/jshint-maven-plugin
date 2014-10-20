@@ -3,8 +3,8 @@ package de.mklinger.maven.jshint.cache;
 import java.io.Serializable;
 import java.util.List;
 
-import de.mklinger.maven.jshint.jshint.JSHint.Hint;
-import de.mklinger.maven.jshint.jshint.JSHint.HintSeverity;
+import de.mklinger.maven.jshint.jshint.Hint;
+import de.mklinger.maven.jshint.jshint.Hint.HintSeverity;
 
 public class Result implements Comparable<Result>, Serializable {
 	private static final long serialVersionUID = 1L;
@@ -22,10 +22,10 @@ public class Result implements Comparable<Result>, Serializable {
 		boolean hasErrors = false;
 		boolean hasWarnings = false;
 		for (final Hint hint : hints) {
-			if (hint.severity == HintSeverity.WARNING) {
+			if (hint.getSeverity() == HintSeverity.WARNING) {
 				hasWarnings = true;
 			}
-			if (hint.severity == HintSeverity.ERROR) {
+			if (hint.getSeverity() == HintSeverity.ERROR) {
 				hasErrors = true;
 			}
 			if (hasErrors && hasWarnings) {

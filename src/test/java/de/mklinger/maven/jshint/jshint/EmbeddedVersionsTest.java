@@ -1,4 +1,4 @@
-package de.mklinger.maven.jshint;
+package de.mklinger.maven.jshint.jshint;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,10 +13,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-
-import de.mklinger.maven.jshint.jshint.EmbeddedJshintCode;
-import de.mklinger.maven.jshint.jshint.JSHint;
-import de.mklinger.maven.jshint.jshint.JSHint.Hint;
 
 @RunWith(Parameterized.class)
 public class EmbeddedVersionsTest {
@@ -64,7 +60,7 @@ public class EmbeddedVersionsTest {
 		// then
 		Assert.assertNotNull(hints);
 		Assert.assertEquals(1, hints.size());
-		Assert.assertEquals(variants.expectedEvalIsEvilMessage(), hints.get(0).reason);
+		Assert.assertEquals(variants.expectedEvalIsEvilMessage(), hints.get(0).getReason());
 	}
 
 
@@ -105,7 +101,7 @@ public class EmbeddedVersionsTest {
 		// then
 		Assert.assertNotNull(hints);
 		Assert.assertEquals(1, hints.size());
-		Assert.assertEquals("Expected 'alert' to have an indentation at 1 instead at 2.", hints.get(0).reason);
+		Assert.assertEquals("Expected 'alert' to have an indentation at 1 instead at 2.", hints.get(0).getReason());
 	}
 
 	@Test
@@ -122,7 +118,7 @@ public class EmbeddedVersionsTest {
 		// then
 		Assert.assertNotNull(hints);
 		Assert.assertEquals(1, hints.size());
-		Assert.assertEquals(variants.expectedErrorMessageForTwoTooManyParameters(), hints.get(0).reason);
+		Assert.assertEquals(variants.expectedErrorMessageForTwoTooManyParameters(), hints.get(0).getReason());
 	}
 
 	@Test
@@ -139,8 +135,8 @@ public class EmbeddedVersionsTest {
 		// then
 		Assert.assertNotNull(hints);
 		Assert.assertEquals(1, hints.size());
-		Assert.assertEquals("W031", hints.get(0).code);
-		Assert.assertEquals("Do not use 'new' for side effects.", hints.get(0).raw);
+		Assert.assertEquals("W031", hints.get(0).getCode());
+		Assert.assertEquals("Do not use 'new' for side effects.", hints.get(0).getRaw());
 	}
 
 	@Test
@@ -166,7 +162,7 @@ public class EmbeddedVersionsTest {
 	private static String toString(final List<Hint> hints) {
 		final StringBuffer text = new StringBuffer();
 		for (final Hint hint : hints) {
-			text.append(hint.reason + "\n");
+			text.append(hint.getReason() + "\n");
 		}
 		return text.toString();
 	}

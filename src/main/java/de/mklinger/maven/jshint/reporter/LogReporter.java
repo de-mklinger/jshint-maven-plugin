@@ -4,7 +4,7 @@ import org.apache.maven.plugin.logging.Log;
 
 import de.mklinger.maven.jshint.cache.Result;
 import de.mklinger.maven.jshint.cache.Results;
-import de.mklinger.maven.jshint.jshint.JSHint.Hint;
+import de.mklinger.maven.jshint.jshint.Hint;
 
 /**
  * @author Marc Klinger - mklinger[at]mklinger[dot]de - klingerm
@@ -32,15 +32,15 @@ public class LogReporter implements JSHintReporter {
 			sb.append(NL);
 			for (final Hint hint : result.hints) {
 				sb.append("   ");
-				sb.append(hint.severity);
+				sb.append(hint.getSeverity());
 				sb.append(" at ");
-				sb.append(hint.line.intValue());
+				sb.append(hint.getLine().intValue());
 				sb.append(',');
-				sb.append(hint.character.intValue());
+				sb.append(hint.getCharacter().intValue());
 				sb.append(": ");
-				sb.append(hint.reason);
+				sb.append(hint.getReason());
 				sb.append(" \t(");
-				sb.append(hint.code);
+				sb.append(hint.getCode());
 				sb.append(")");
 				sb.append('\n');
 			}

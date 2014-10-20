@@ -10,6 +10,9 @@ import org.codehaus.plexus.util.StringUtils;
 import de.mklinger.maven.jshint.util.OptionsParser;
 
 public class Config {
+	private static final String COMMA = ",";
+	private static final String EMPTY_STRING = "";
+
 	public static enum ConfigType {
 		OPTIONS,
 		GLOBALS,
@@ -22,7 +25,7 @@ public class Config {
 	private final String options;
 	private final String globals;
 
-	public Config(final ConfigType configType, final File configFile) throws IOException {
+	private Config(final ConfigType configType, final File configFile) throws IOException {
 		this.configType = configType;
 		this.configFile = configFile;
 
@@ -32,15 +35,15 @@ public class Config {
 		final Set<String> optionsSet = OptionsParser.extractOptions(configFileContents);
 
 		if (globalsSet.size() > 0) {
-			globals = StringUtils.join(globalsSet.iterator(), ",");
+			globals = StringUtils.join(globalsSet.iterator(), COMMA);
 		} else {
-			globals = "";
+			globals = EMPTY_STRING;
 		}
 
 		if (optionsSet.size() > 0) {
-			options = StringUtils.join(optionsSet.iterator(), ",");
+			options = StringUtils.join(optionsSet.iterator(), COMMA);
 		} else {
-			options = "";
+			options = EMPTY_STRING;
 		}
 	}
 

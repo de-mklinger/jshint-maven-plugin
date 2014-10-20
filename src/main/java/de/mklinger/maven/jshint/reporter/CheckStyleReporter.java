@@ -6,7 +6,7 @@ import java.io.Writer;
 
 import de.mklinger.maven.jshint.cache.Result;
 import de.mklinger.maven.jshint.cache.Results;
-import de.mklinger.maven.jshint.jshint.JSHint.Hint;
+import de.mklinger.maven.jshint.jshint.Hint;
 
 /**
  * CheckStyle style xml reporter class.
@@ -28,7 +28,7 @@ public class CheckStyleReporter extends BaseXmlFileReporter {
 			writer.write("\t<file name=\"" + result.path + "\">\n");
 			for (final Hint hint : result.hints) {
 				writer.write(String.format("\t\t<" + severity(hint) + " line=\"%d\" column=\"%d\" message=\"%s\" source=\"jshint.%s\" severity=\"%s\" />\n",
-						hint.line.intValue(), hint.character.intValue(), encode(hint.reason), encode(hint.code), severity(hint)));
+						hint.getLine().intValue(), hint.getCharacter().intValue(), encode(hint.getReason()), encode(hint.getCode()), severity(hint)));
 			}
 			writer.write("\t</file>\n");
 		}
@@ -36,6 +36,6 @@ public class CheckStyleReporter extends BaseXmlFileReporter {
 	}
 
 	private String severity(final Hint hint) {
-		return hint.severity.name().toLowerCase();
+		return hint.getSeverity().name().toLowerCase();
 	}
 }
