@@ -10,6 +10,7 @@ import java.io.Writer;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import de.mklinger.maven.jshint.cache.Results;
+import de.mklinger.maven.jshint.util.Util;
 
 /**
  * @author Marc Klinger - mklinger[at]mklinger[dot]de - klingerm
@@ -28,11 +29,7 @@ public abstract class BaseXmlFileReporter implements JSHintReporter {
 		}
 		try {
 			final File outputDirectory = outputFile.getParentFile();
-			if (!outputDirectory.exists()) {
-				if (!outputDirectory.mkdirs()) {
-					throw new IOException("Error creating directory: " + outputDirectory.getAbsolutePath());
-				}
-			}
+			Util.mkdirs(outputDirectory);
 			final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
 			try {
 				writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");

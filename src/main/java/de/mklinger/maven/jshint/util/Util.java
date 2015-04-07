@@ -10,70 +10,54 @@ import java.io.ObjectOutputStream;
 import org.apache.commons.io.FileUtils;
 
 public class Util {
-
 	@SuppressWarnings("unchecked")
-	public static <T> T readObject(final File path) {
+	public static <T> T readObject(final File path) throws IOException, ClassNotFoundException {
+		final ObjectInputStream in = new ObjectInputStream(new FileInputStream(path));
 		try {
-			final ObjectInputStream in = new ObjectInputStream(new FileInputStream(path));
-			try {
-				return (T) in.readObject();
-			} finally {
-				in.close();
-			}
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
+			return (T) in.readObject();
+		} finally {
+			in.close();
 		}
 	}
 
-	public static void writeObject(final Object o, final File path) {
+	public static void writeObject(final Object o, final File path) throws IOException {
+		final ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(path));
 		try {
-			final ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(path));
-			try {
-				out.writeObject(o);
-			} finally {
-				out.close();
-			}
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
+			out.writeObject(o);
+		} finally {
+			out.close();
 		}
 	}
 
-
-	public static void deleteDirectory(final File directory) {
-		try {
-			FileUtils.deleteDirectory(directory);
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+	public static void deleteDirectory(final File directory) throws IOException {
+		FileUtils.deleteDirectory(directory);
 	}
 
-	public static File tempDir() {
-		try {
-			final File path = File.createTempFile("tempdirectory", ".dir");
-			delete(path);
-			mkdirs(path);
-			return path;
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public static void delete(final File path) {
-		if (!path.delete()) {
-			throw new RuntimeException("Could not delete " + path.getAbsolutePath());
-		}
-	}
-
-	public static File mkdirs(final File directory, final String string) {
-		final File path = new File(directory, string);
+	public static File tempDir() throws IOException {
+		final File path = File.createTempFile("tempdirectory", ".dir");
+		delete(path);
 		mkdirs(path);
 		return path;
 	}
 
-	public static void mkdirs(final File path) {
-		if (!path.exists() && !path.mkdirs()) {
-			throw new RuntimeException("Could not create directory: " + path.getAbsolutePath());
+	public static void delete(final File path) throws IOException {
+		if (!path.delete()) {
+			throw new IOException("Could not delete " + path.getAbsolutePath());
 		}
 	}
 
+	public static File mkdirs(final File baseDirectory, final String name) throws IOException {
+		final File path = new File(baseDirectory, name);
+		mkdirs(path);
+		return path;
+	}
+
+	public static void mkdirs(final File path) throws IOException {
+		if (!path.exists()) {
+			path.mkdirs();
+			if (!path.isDirectory()) {
+				throw new IOException("Could not create directory: " + path.getAbsolutePath());
+			}
+		}
+	}
 }
